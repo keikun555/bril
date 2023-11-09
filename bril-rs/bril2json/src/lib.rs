@@ -122,6 +122,19 @@ pub fn parse_abstract_program_from_read<R: std::io::Read>(
 ) -> AbstractProgram {
     let mut buffer = String::new();
     input.read_to_string(&mut buffer).unwrap();
+
+    parse_abstract_program_from_string(buffer, use_pos, with_end, file_name)
+}
+
+/// It takes an ```string```:[`String`] which should be the Bril string. You can control whether it includes source code positions with ```use_pos```.
+/// # Panics
+/// Will panic if the input is not well-formed Bril text
+pub fn parse_abstract_program_from_string(
+    buffer: String,
+    use_pos: bool,
+    with_end: bool,
+    file_name: Option<String>,
+) -> AbstractProgram {
     let parser = bril_grammar::AbstractProgramParser::new();
 
     let src_name = file_name.map(|f| std::fs::canonicalize(f).unwrap().display().to_string());
