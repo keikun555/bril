@@ -66,3 +66,7 @@ plot: plot.svg
 .PHONY: example
 example:
 	bril2json < ../benchmarks/float/sqrt.bril | cargo run
+
+.PHONY: brilirs_python
+brilirs-python:
+	python3 -m maturin develop --release

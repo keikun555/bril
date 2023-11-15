@@ -10,6 +10,7 @@
 use basic_block::BBProgram;
 use bril_rs::Program;
 use error::PositionalInterpError;
+use pyo3::prelude::*;
 
 /// The internal representation of brilirs, provided a ```TryFrom<Program>``` conversion
 pub mod basic_block;
@@ -50,3 +51,69 @@ pub fn run_input<T: std::io::Write, U: std::io::Write>(
 
   Ok(())
 }
+
+/// Used for IO with Python
+pub struct StringIO {
+    /// The vector to write to
+    pub buffer: Vec<String>,
+}
+
+impl std::io::Write for StringIO {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, std::io::Error> {
+        let s: String = String::from_utf8_lossy(buf).to_string();
+        self.buffer.push(s);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> Result<(), std::io::Error> {
+        Ok(())
+    }
+}
+
+impl std::convert::From<PositionalInterpError> for pyo3::PyErr {
+    fn from(err: PositionalInterpError) -> pyo3::PyErr {
+        pyo3::exceptions::PyRuntimeError::new_err(err.to_string())
+    }
+}
+
+impl std::convert::From<error::InterpError> for pyo3::PyErr {
+    fn from(err: error::InterpError) -> pyo3::PyErr {
+        pyo3::exceptions::PyRuntimeError::new_err(err.to_string())
+    }
+}
+
+ #[pyfunction]
+/// PyO3 bindings for Python
+ pub fn run_program(
+   prog_string: String,
+   out: Vec<String>,
+   input_args: Vec<String>,
+   profiling: bool,
+   profiling_out: Vec<String>,
+   src_name: Option<String>
+ ) -> Result<(), pyo3::PyErr> {
+   let prog: Program = bril2json::parse_abstract_program_from_string(prog_string, true, true, src_name).try_into()?;
+   let bbprog: BBProgram = prog.try_into()?;
+   check::type_check(&bbprog)?;
+
+   let out_write = StringIO {
+       buffer: out,
+   };
+   let profiling_out_write = StringIO {
+       buffer: profiling_out,
+   };
+
+   interp::execute_main(&bbprog, out_write, &input_args, profiling, profiling_out_write)?;
+
+   Ok(())
+ }
+
+
+/// A Python module implemented in Rust. The name of this function must match
+/// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
+/// import the module.
+#[pymodule]
+fn brilirs_python(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(run_program, m)?)?;
+    Ok(())
+}
+

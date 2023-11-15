@@ -84,6 +84,12 @@ impl Display for PositionalConversionError {
     }
 }
 
+impl std::convert::From<PositionalConversionError> for pyo3::PyErr {
+    fn from(err: PositionalConversionError) -> pyo3::PyErr {
+        pyo3::exceptions::PyValueError::new_err(err.to_string())
+    }
+}
+
 impl TryFrom<AbstractProgram> for Program {
     type Error = PositionalConversionError;
     fn try_from(

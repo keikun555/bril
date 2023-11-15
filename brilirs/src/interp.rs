@@ -810,7 +810,6 @@ pub fn execute_main<T: std::io::Write, U: std::io::Write>(
     return Err(InterpError::MemLeak).map_err(|e| e.add_pos(main_func.pos.clone()));
   }
 
-  state.out.flush().map_err(InterpError::IoError)?;
 
   if profiling {
     writeln!(profiling_out, "total_dyn_inst: {}", state.instruction_count)
