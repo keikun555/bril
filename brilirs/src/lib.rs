@@ -53,15 +53,15 @@ pub fn run_input<T: std::io::Write, U: std::io::Write>(
 }
 
 /// Used for IO with Python
-pub struct StringIO {
+pub struct StringIO<'lifetime> {
     /// The vector to write to
-    pub buffer: Vec<String>,
+    pub buffer: &'lifetime pyo3::types::PyList,
 }
 
-impl std::io::Write for StringIO {
+impl<'lifetime> std::io::Write for StringIO<'lifetime> {
     fn write(&mut self, buf: &[u8]) -> Result<usize, std::io::Error> {
         let s: String = String::from_utf8_lossy(buf).to_string();
-        self.buffer.push(s);
+        self.buffer.append(s)?;
         Ok(buf.len())
     }
     fn flush(&mut self) -> Result<(), std::io::Error> {
@@ -85,12 +85,12 @@ impl std::convert::From<error::InterpError> for pyo3::PyErr {
 /// PyO3 bindings for Python
  pub fn run_program(
    prog_string: String,
-   out: Vec<String>,
+   out: &pyo3::types::PyList,
    input_args: Vec<String>,
    profiling: bool,
-   profiling_out: Vec<String>,
+   profiling_out: &pyo3::types::PyList,
    src_name: Option<String>
- ) -> Result<(), pyo3::PyErr> {
+ ) -> Result<Option<i64>, pyo3::PyErr> {
    let prog: Program = bril2json::parse_abstract_program_from_string(prog_string, true, true, src_name).try_into()?;
    let bbprog: BBProgram = prog.try_into()?;
    check::type_check(&bbprog)?;
@@ -102,9 +102,9 @@ impl std::convert::From<error::InterpError> for pyo3::PyErr {
        buffer: profiling_out,
    };
 
-   interp::execute_main(&bbprog, out_write, &input_args, profiling, profiling_out_write)?;
+   let return_code = interp::execute_main(&bbprog, out_write, &input_args, profiling, profiling_out_write)?;
 
-   Ok(())
+   Ok(return_code)
  }
 
 
@@ -112,7 +112,7 @@ impl std::convert::From<error::InterpError> for pyo3::PyErr {
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
-fn brilirs_python(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn brilirs(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run_program, m)?)?;
     Ok(())
 }

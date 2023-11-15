@@ -790,7 +790,7 @@ pub fn execute_main<T: std::io::Write, U: std::io::Write>(
   input_args: &[String],
   profiling: bool,
   mut profiling_out: U,
-) -> Result<(), PositionalInterpError> {
+) -> Result<Option<i64>, PositionalInterpError> {
   let main_func = prog
     .index_of_main
     .map(|i| prog.get(i).unwrap())
@@ -804,7 +804,7 @@ pub fn execute_main<T: std::io::Write, U: std::io::Write>(
 
   let mut state = State::new(prog, env, heap, out);
 
-  execute(&mut state, main_func)?;
+  let result = execute(&mut state, main_func)?;
 
   if !state.heap.is_empty() {
     return Err(InterpError::MemLeak).map_err(|e| e.add_pos(main_func.pos.clone()));
@@ -819,5 +819,9 @@ pub fn execute_main<T: std::io::Write, U: std::io::Write>(
       .map_err(InterpError::IoError)?;
   }
 
-  Ok(())
+  if let Some(Value::Int(i)) = result {
+      Ok(Some(i))
+  } else {
+      Ok(None)
+  }
 }
