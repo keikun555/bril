@@ -47,7 +47,15 @@ pub fn output_program(p: &Program) {
 pub fn load_abstract_program_from_read<R: std::io::Read>(mut input: R) -> AbstractProgram {
     let mut buffer = String::new();
     input.read_to_string(&mut buffer).unwrap();
-    serde_json::from_str(&buffer).unwrap()
+    // serde_json::from_str(&buffer).unwrap()
+    load_abstract_program_from_string(&buffer)
+}
+
+/// A helper function for parsing a Bril program from ```input``` in JSON format to [`AbstractProgram`]
+/// # Panics
+/// Will panic if the input JSON is not well-formed bril JSON
+pub fn load_abstract_program_from_string(input: &String) -> AbstractProgram {
+    serde_json::from_str(&input).unwrap()
 }
 
 /// A wrapper of [`load_abstract_program_from_read`] which assumes [`std::io::Stdin`]

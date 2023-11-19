@@ -89,9 +89,8 @@ impl std::convert::From<error::InterpError> for pyo3::PyErr {
    input_args: Vec<String>,
    profiling: bool,
    profiling_out: &pyo3::types::PyList,
-   src_name: Option<String>
  ) -> Result<Option<i64>, pyo3::PyErr> {
-   let prog: Program = bril2json::parse_abstract_program_from_string(prog_string, true, true, src_name).try_into()?;
+   let prog: Program = bril_rs::load_abstract_program_from_string(&prog_string).try_into()?;
    let bbprog: BBProgram = prog.try_into()?;
    check::type_check(&bbprog)?;
 
