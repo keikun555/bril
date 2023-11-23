@@ -411,7 +411,9 @@ function evalCall(instr: bril.Operation, state: State): Action {
  * instruction or "end" to terminate the function.
  */
 function evalInstr(instr: bril.Instruction, state: State): Action {
-  state.icount += BigInt(1);
+  if (instr.op !== "nop") {
+    state.icount += BigInt(1);
+  }
 
   // Check that we have the right number of arguments.
   if (instr.op !== "const") {

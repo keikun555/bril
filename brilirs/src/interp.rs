@@ -566,7 +566,10 @@ fn execute_effect_op<T: std::io::Write>(
         )?;
       }
     }
-    Nop => {}
+    Nop => {
+        // Discount nop operations from instruction count
+        state.instruction_count -= 1;
+    }
     Call => {
       let callee_func = state.prog.get(funcs[0]).unwrap();
 
