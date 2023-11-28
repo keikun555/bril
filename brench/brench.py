@@ -49,6 +49,7 @@ def run_pipe(cmds, input, timeout):
 def run_bench(pipeline, fn, timeout):
     """Run a single benchmark pipeline.
     """
+    os.system("pkill -9 -f optimize.py")
     # Load the benchmark.
     with open(fn) as f:
         in_data = f.read()
